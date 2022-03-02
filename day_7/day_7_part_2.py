@@ -30,7 +30,10 @@ def find_cheapest_possible_outcome(counted_positions):
         for position, quantity in enumerate(counted_positions):
             # Calculate fuel cost for each possible position
             fuel_per_position[possible_position] += (
-                sum(range(abs(position - possible_position) + 1)) * quantity
+                abs(position - possible_position)
+                * (abs(position - possible_position) + 1)
+                // 2
+                * quantity
             )
 
     return fuel_per_position

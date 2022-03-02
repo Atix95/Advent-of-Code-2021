@@ -1,6 +1,9 @@
 import os
 
 
+DAYS_TILL_REPRODUCTION = 9
+
+
 def load_initial_lanternfish(file_name):
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
     with open(file_path, "r", encoding="utf-8") as file_fishes:
@@ -31,7 +34,6 @@ def lanternfish_reproduction(initial_state, days):
 
 
 if __name__ == "__main__":
-    DAYS_TILL_REPRODUCTION = 9
     days = 256
 
     final_state_lanternfish = lanternfish_reproduction(

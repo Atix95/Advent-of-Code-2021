@@ -17,8 +17,7 @@ def sort_patterns(display_patterns):
 
     for display in range(len(display_patterns)):
         for output in range(14):
-            sorted_string = ""
-            display_patterns[display][output] = sorted_string.join(
+            display_patterns[display][output] = "".join(
                 sorted(display_patterns[display][output])
             )
 
@@ -29,6 +28,8 @@ def decode_display(display_patterns):
     sum_of_output_entries = 0
 
     for display in range(len(display_patterns)):
+        one_string = ""
+        four_string = ""
         zero_six_nine_string = []
         two_three_five_string = []
         output_entry = ""

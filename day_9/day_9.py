@@ -21,7 +21,9 @@ def find_lowpoint(heightmap):
 
     for v_index, line in enumerate(heightmap):
         for h_index, digit in enumerate(line):
-
+            # Check from left to right and then from top to bottom.
+            # After finding a potential lowpoint, it is checked if its
+            # an actual lowpoint.
             if (
                 digit[1] == False
                 and h_index < len(line) - 1

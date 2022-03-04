@@ -2,7 +2,7 @@ import os
 
 
 def load_heightmap(file_name):
-    # Create a tuple of each digit in the heightmap with a boolean, that
+    # Create a list of each digit in the heightmap with a boolean, that
     # is False, if the digit has not yet been checked to be a lowpoint.
     # This is done to prevent a lowpoint to be counted multiple times.
     split_num_into_digits = lambda num: [[int(digit), False] for digit in str(num)]

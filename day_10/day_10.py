@@ -34,8 +34,11 @@ def find_corrupted_lines(navigation_subsystem):
             ):
                 found_characters = found_characters[:-1]
             else:
+                # Print an error message as its shown in the task
+                # and add the score of the unmatching bracket
                 print(
-                    f"Expected {bracket_pairs[found_characters[-1]]}, but found {character} instead."
+                    f"Expected {bracket_pairs[found_characters[-1]]}, "
+                    + "but found {character} instead."
                 )
                 syntax_error_score += score_table[character]
                 break

@@ -14,7 +14,7 @@ def find_corrupted_lines(navigation_subsystem):
     # Dictionary with bracket pairs
     bracket_pairs = {"(": ")", "[": "]", "{": "}", "<": ">"}
 
-    # Score table, to determine the syntax error score
+    # Score table to determine the syntax error score
     score_table = {")": 3, "]": 57, "}": 1197, ">": 25137}
     syntax_error_score = 0
 

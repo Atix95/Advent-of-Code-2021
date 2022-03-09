@@ -32,7 +32,7 @@ def octopus_flashes(energy_levels):
     width = len(energy_levels[0])  # In octopuses
     height = len(energy_levels)  # In octopuses
     num_of_octopuses = width * height  # In octopuses square ;)
-
+    # bla
     while len(checked_flashing_octopuses) < num_of_octopuses:
         # Reset the list of checked and unchecked octopuses
         unchecked_flashing_octopuses = []

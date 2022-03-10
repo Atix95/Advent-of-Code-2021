@@ -10,9 +10,10 @@ def load_energy_level(file_name):
     split_num_into_digits = lambda num: [int(digit) for digit in str(num)]
 
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
-    with open(file_path, "r", encoding="utf-8") as file_navigation:
+    with open(file_path, "r", encoding="utf-8") as file_energy_levels:
         energy_levels = [
-            split_num_into_digits(line) for line in file_navigation.read().split("\n")
+            split_num_into_digits(line)
+            for line in file_energy_levels.read().split("\n")
         ]
 
     return energy_levels

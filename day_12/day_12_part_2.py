@@ -46,8 +46,10 @@ def find_all_paths(cave_system):
                 # possible path. Then, determine the next cave and check if the path
                 # is allowed. If the cave is large add it to possible paths. If the
                 # path ends with "end" add the path to paths. If the cave is small
-                # check, if the cave has already been visited. If not add it to
-                # possible paths.
+                # check, if this cave has already been visited twice. If not create
+                # a list of all small caves in path and check whether a small cave has
+                # been visited twice. If so and the next cave is not already in the
+                # path add it to possible paths.
 
                 next_cave = (
                     set(cave_connections).difference({possible_paths[0][-1]})
@@ -59,8 +61,18 @@ def find_all_paths(cave_system):
                 elif next_cave == "end" and path + [next_cave] not in paths:
                     paths.append(path + [next_cave])
 
-                elif next_cave.islower() and next_cave not in possible_paths[0]:
-                    possible_paths.append(path + [next_cave])
+                elif (
+                    next_cave.islower()
+                    and path.count(next_cave) < 2
+                    and next_cave != "start"
+                ):
+                    small_caves_in_path = [cave for cave in path[1:] if cave.islower()]
+
+                    if (
+                        len(small_caves_in_path) <= len(set(small_caves_in_path))
+                        or next_cave not in path
+                    ):
+                        possible_paths.append(path + [next_cave])
 
         # Cut the first possible path that has now been
         # checked for all possible path continuations.

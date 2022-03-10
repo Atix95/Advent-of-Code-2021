@@ -12,7 +12,8 @@ def load_energy_level(file_name):
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
     with open(file_path, "r", encoding="utf-8") as file_energy_levels:
         energy_levels = [
-            split_num_into_digits(line) for line in file_energy_levels.read().split("\n")
+            split_num_into_digits(line)
+            for line in file_energy_levels.read().split("\n")
         ]
 
     return energy_levels
@@ -32,7 +33,7 @@ def octopus_flashes(energy_levels):
     width = len(energy_levels[0])  # In octopuses
     height = len(energy_levels)  # In octopuses
     num_of_octopuses = width * height  # In octopuses square ;)
-    # bla
+
     while len(checked_flashing_octopuses) < num_of_octopuses:
         # Reset the list of checked and unchecked octopuses
         unchecked_flashing_octopuses = []

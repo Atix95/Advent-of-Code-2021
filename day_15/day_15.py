@@ -16,4 +16,5 @@ def load_risk_levels(file_name):
 
 
 if __name__ == "__main__":
-    print(load_risk_levels("day_15_example_input.txt"))
+    for line in load_risk_levels("day_15_example_input.txt"):
+        print(line)

@@ -39,13 +39,13 @@ def decode_hexa_into_binary(hexa_message):
     return binary_string
 
 
-def literal_value(binary_string):
-    # Packet represents literal value. While the five bit packet starts with a 1,
-    # which is stored in packet_literal, the four bits after the 1 are added to the
-    # binary string. Then the binary_string is stripped of the first 5 bits and the
-    # next five bits are added to packet_literal. If the first bit is a 0, this
-    # procedure is done one last time and the final literal value can be converted
-    # into a decimal number (decimal_literal).
+def decode_literal_value(binary_string):
+    # Packet represents literal value. While the five bit packet, which is stored in
+    # packet_literal, starts with a 1, the four bits after the 1 are added to the
+    # binary_literal string. Then the binary_string is stripped of the first 5 bits
+    # and the next five bits are added to packet_literal. If the first bit is a 0,
+    # this procedure is done one last time and the final literal value can be converted
+    # into a decimal number (literal_value).
     binary_literal = ""
     packet_literal = binary_string[:5]
 
@@ -58,19 +58,20 @@ def literal_value(binary_string):
     binary_literal += packet_literal[1:5]
     binary_string = binary_string[5:]
 
-    decimal_literal = int(binary_literal, 2)
+    literal_value = int(binary_literal, 2)
 
-    return binary_string, decimal_literal
+    return binary_string, literal_value
 
 
 def decode_binary(binary_string, sum_of_version_numbers=0):
     # Since the packet at its outermost layer can only contain tailing 0s, the hexa-
     # decimal message in binary is searched for packets, as long as the binary string
-    # contains 1s. If the type ID of the packet is 4, the packet contains a literal value
-    # and the function for it is called. Otherwise its an operator, which then means the
-    # length type ID has to be checked. Depending on the value this function gets a recur-
-    # sive call at least once. As soon as a packet version is identified it is added to
-    # sum_of_version_numbers.
+    # contains 1s. To keep track of the current position in the binary string, the neces-
+    # sary bits are sliced from the string. If the type ID of the packet is 4, the packet
+    # contains a literal value and the function for it is called. Otherwise its an operator,
+    # which then means the length type ID has to be checked. Depending on the value this
+    # function is called recursively at least once. As soon as a packet version is identified
+    # it is added to sum_of_version_numbers.
 
     while "1" in set(binary_string):
         packet_version, type_id = int(binary_string[:3], 2), int(binary_string[3:6], 2)
@@ -78,38 +79,36 @@ def decode_binary(binary_string, sum_of_version_numbers=0):
         sum_of_version_numbers += packet_version
 
         if type_id == 4:
-            # Packet represents a literal value
-            binary_string, decimal_literal = literal_value(binary_string)
+            # Packet represents a literal value. Since the literal value is not needed in
+            # this part, the assignment of it can be ignored but is kept for completeness.
+            binary_string, literal_value = decode_literal_value(binary_string)
 
         else:
             # Packet represents an operator
-            length_type_id = binary_string[0]
+            length_type_id = int(binary_string[0], 2)
             binary_string = binary_string[1:]
 
-            if length_type_id == "0":
+            if length_type_id == 0:
                 # Next 15 bits represent the total length in bits of sub-packets. Since
                 # the end of each sub-packet, that is part of these bits, can be identified
-                # without tracking the total length in bits, the first two lines in this
-                # statement can actually be ignored. This function then gets a recursive
-                # call.
-                total_length_bits = binary_string[:15]
-                total_length_int = int(total_length_bits, 2)
+                # without tracking the total length in bits, the first line in this statement
+                # can actually be ignored. This function then is called recursively.
+                total_length_int = int(binary_string[:15], 2)
                 binary_string = binary_string[15:]
 
                 binary_string, sum_of_version_numbers = decode_binary(
                     binary_string, sum_of_version_numbers
                 )
 
-            elif length_type_id == "1":
+            elif length_type_id == 1:
                 # Next 11 bits represent the number of sub-packets contained in this packet.
                 # Since this function does not distinguish between a sub-packet or a regular
-                # packet, one reusrive call of this function would be suffiecient. Still, the
+                # packet, one recursive call of this function would be sufficient. Still, the
                 # for-loop is maintained for completeness.
-                num_subpackets_bits = binary_string[:11]
+                num_sub_packets_int = int(binary_string[:11], 2)
                 binary_string = binary_string[11:]
-                num_subpackets_int = int(num_subpackets_bits, 2)
 
-                for sub_packets in range(num_subpackets_int):
+                for sub_packets in range(num_sub_packets_int):
                     binary_string, sum_of_version_numbers = decode_binary(
                         binary_string, sum_of_version_numbers
                     )

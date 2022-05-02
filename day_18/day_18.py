@@ -1,5 +1,6 @@
 import json
 import os
+from typing import List
 
 
 def load_snail_numbers(file_name):
@@ -25,18 +26,35 @@ class Node:
             return str(self.value)
         return f"[{str(self.left)},{str(self.right)}]"
 
+    def is_leaf(self) -> bool:
+        return isinstance(self.value, int)
 
-def build_binary_tree(snail_number):
-    root = Node()
+    def flatten(self) -> List[int]:
+        if self.is_leaf():
+            return [self.value]
 
-    if isinstance(snail_number, int):
-        root.value = snail_number
+        values = []
+        values.extend(self.left.flatten())
+        values.extend(self.right.flatten())
+
+        return values
+
+    def depth(self) -> int:
+        # Conitnue
+        return
+
+    @classmethod
+    def build_binary_tree(cls, snail_number):
+        root = cls(None)
+
+        if isinstance(snail_number, int):
+            root.value = snail_number
+            return root
+
+        root.left = cls.build_binary_tree(snail_number[0])
+        root.right = cls.build_binary_tree(snail_number[1])
+
         return root
-
-    root.left = build_binary_tree(snail_number[0])
-    root.right = build_binary_tree(snail_number[1])
-
-    return root
 
 
 def check_if_snail_number_is_nested(x, y, x_depth=0, y_depth=0):
@@ -80,12 +98,15 @@ def add_snail_numbers(snail_numbers):
 
 if __name__ == "__main__":
     snail_numbers = load_snail_numbers("day_18_example_input.txt")
-    print("\n".join(str(line) for line in snail_numbers))
-    print("Snail numbers added:")
-    print(add_snail_numbers([7, [6, [5, [4, [3, 2]]]]]))
+    # print("\n".join(str(line) for line in snail_numbers))
+    # print("Snail numbers added:")
+    # print(add_snail_numbers([7, [6, [5, [4, [3, 2]]]]]))
+    # print(Node.build_binary_tree(snail_numbers[0]))
 
     # [[[[[9, 8], 1], 2], 3], 4]
     # [7, [6, [5, [4, [3, 2]]]]]
+    x = Node.build_binary_tree([7, [6, [5, [4, [3, 2]]]]])
+    print(x.flatten())
 
     """
         1. input: Knoten mit einer Zahl

@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List
+from typing import List, Tuple
 
 
 def load_snail_numbers(file_name):
@@ -15,13 +15,19 @@ def load_snail_numbers(file_name):
     return snail_numbers
 
 
-class Node:
-    def __init__(self, value):
+def pairwise(iterable):
+    x = iter(iterable)
+    return zip(x, x)
+
+
+class BinaryNode:
+    def __init__(self, value) -> None:
         self.value = value
+        self.parent = None
         self.left = None
         self.right = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.is_leaf():
             return str(self.value)
         return f"[{str(self.left)}, {str(self.right)}]"
@@ -30,9 +36,32 @@ class Node:
         return isinstance(self.value, int)
 
     def is_branch(self) -> bool:
-        return isinstance(self, Node)
+        return isinstance(self, BinaryNode)
+
+    def add_left_branch(self, left_branch: List) -> None:
+        self.left = self.build_binary_tree(left_branch)
+        self.left.parent = self
+
+    def add_right_branch(self, right_branch: List) -> None:
+        self.right = self.build_binary_tree(right_branch)
+        self.right.parent = self
+
+    @classmethod
+    def build_binary_tree(cls, snail_number):
+        root = cls(None)
+
+        if isinstance(snail_number, int):
+            root.value = snail_number
+            return root
+
+        left_branch, right_branch = snail_number
+        root.add_left_branch(left_branch)
+        root.add_right_branch(right_branch)
+
+        return root
 
     def flatten(self) -> List[int]:
+        # This is just to test and learn about classes in Python
         values = []
 
         if self.is_leaf():
@@ -43,40 +72,33 @@ class Node:
 
         return values
 
+    def add_left_node(self, left_tree):
+        self.left = left_tree
+        self.left.parent = self
+
+    def add_right_node(self, right_tree):
+        self.right = right_tree
+        self.right.parent = self
+
+    def add_trees(self, tree_to_be_added):
+        left_tree = self
+        right_tree = tree_to_be_added
+
+        root = BinaryNode(None)
+        root.add_left_node(left_tree)
+        root.add_right_node(right_tree)
+
+        return root
+
     def depth(self) -> int:
         if self.is_leaf():
             return 0
         return max(self.left.depth() + 1, self.right.depth() + 1)
 
-    def depth_branches(self) -> int:
-        return
-
-    def add_trees(self, tree_to_be_added):
-        original_tree = self
-
-        root = Node(None)
-        root.left = original_tree
-        root.right = tree_to_be_added
-
-        return root
-
-    def magnitude(self) -> int:
-        if self.is_leaf():
-            return self.value
-        return 3 * self.left.magnitude() + 2 * self.right.magnitude()
-
-    @classmethod
-    def build_binary_tree(cls, snail_number):
-        root = cls(None)
-
-        if isinstance(snail_number, int):
-            root.value = snail_number
-            return root
-
-        root.left = cls.build_binary_tree(snail_number[0])
-        root.right = cls.build_binary_tree(snail_number[1])
-
-        return root
+    def depth_of_branch(self) -> int:
+        if self.parent == None:
+            return 0
+        return self.parent.depth_of_branch() + 1
 
     def get_all_leafs(self):
         list_of_leafs = []
@@ -91,52 +113,43 @@ class Node:
 
         return list_of_leafs
 
+    def get_all_exploading_leafs(self) -> List[Tuple]:
+        exploading_leafs = []
+
+        for leaf_idx, exploading_leaf in enumerate(self.get_all_leafs()):
+            if exploading_leaf.depth_of_branch() > 4:
+                exploading_leafs.append((leaf_idx, exploading_leaf))
+
+        return exploading_leafs
+
+    def explosion(self):
+        exploading_leafs = self.get_all_exploading_leafs()
+        list_of_leafs = self.get_all_leafs()
+
+        for left_leaf_pair, right_leaf_pair in pairwise(exploading_leafs):
+            left_idx, left_leaf = left_leaf_pair
+            right_idx, right_leaf = right_leaf_pair
+
+            if left_idx - 1 >= 0:
+                list_of_leafs[left_idx - 1].value += left_leaf.value
+            if right_idx <= len(list_of_leafs) - 2:
+                list_of_leafs[right_idx + 1].value += right_leaf.value
+
+            left_leaf.parent.left = None
+            left_leaf.parent.right = None
+            left_leaf.parent.value = 0
+
     def reduce(self):
         # Check for explosions
         if self.depth() > 4:
-            leafs = self.get_all_leafs()
-            return
+            self.explosion()
 
-        return
+        return self
 
-
-def check_if_snail_number_is_nested(x, y, x_depth=0, y_depth=0):
-
-    if isinstance(x, list):
-        x_depth += 1
-        print("right", x, x_depth)
-        if x_depth < 4:
-            check_if_snail_number_is_nested(x[0], x[1], x_depth, y_depth)
-        elif x_depth == 4:
-            # explosion!
-            add_left, add_right = x
-            print(add_left, add_right, x_depth, y_depth)
-
-    if isinstance(y, list):
-        y_depth += 1
-        print("left", y, y_depth)
-        if y_depth < 4:
-            check_if_snail_number_is_nested(y[0], y[1], x_depth, y_depth)
-        elif y_depth == 4:
-            # explosion!
-            add_left, add_right = y
-            print(add_left, add_right, x_depth, y_depth)
-
-    return
-
-
-def add_snail_numbers(snail_numbers):
-
-    snail_number_add = snail_numbers[0]
-    print(snail_number_add)
-    for snail_number in snail_numbers[1:]:
-        snail_number_add = [snail_number_add, snail_number]
-        # Check for explosions and splits. Since splits should be simpler, start with them!
-        x, y = snail_number_add
-        print(snail_number_add)
-        check_if_snail_number_is_nested(x, y)
-
-    return snail_number_add
+    def magnitude(self) -> int:
+        if self.is_leaf():
+            return self.value
+        return 3 * self.left.magnitude() + 2 * self.right.magnitude()
 
 
 if __name__ == "__main__":
@@ -148,15 +161,6 @@ if __name__ == "__main__":
 
     # [[[[[9, 8], 1], 2], 3], 4]
     # [7, [6, [5, [4, [3, 2]]]]]
-    # x = Node.build_binary_tree([7, [6, [5, [4, [3, 2]]]]])
-    x = Node.build_binary_tree(9)
+    x = BinaryNode.build_binary_tree([[3, [2, [1, [7, 3]]]], [6, [5, [4, [3, 2]]]]])
     print(x)
-    print(x.depth())
-    print(x.get_all_leafs())
 
-    """
-        1. input: Knoten mit einer Zahl
-        2. input: Knoten mit zwei Kindern (Zahlen)
-        3. input: Knoten mit zwei Kindern, die jeweils zwei Kinder haben
-        weitere Ebenen
-    """

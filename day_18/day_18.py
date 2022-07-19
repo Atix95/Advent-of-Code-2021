@@ -105,24 +105,25 @@ class BinaryNode:
 
     def get_all_leafs(self):
         # Get all leafs and return them in a list
-        list_of_leafs = []
+        leafs = []
 
         if self.is_leaf():
             return [self]
 
         if self.left != None:
-            list_of_leafs.extend(self.left.get_all_leafs())
+            leafs.extend(self.left.get_all_leafs())
         if self.right != None:
-            list_of_leafs.extend(self.right.get_all_leafs())
+            leafs.extend(self.right.get_all_leafs())
 
-        return list_of_leafs
+        return leafs
 
     def get_two_leftmost_exploading_leafs_incl_idx(self) -> List[Tuple]:
         # Return the two leftmost exploading leafs as pairs
-        # with the respective position in list_of_leafs.
+        # with the respective position in the list leafs.
         exploading_leafs = []
+        leafs = self.get_all_leafs()
 
-        for leaf_idx, exploading_leaf in enumerate(self.get_all_leafs()):
+        for leaf_idx, exploading_leaf in enumerate(leafs):
             if exploading_leaf.depth_of_branch() > 4 and len(exploading_leafs) < 4:
                 exploading_leafs.extend([leaf_idx, exploading_leaf])
 
@@ -137,7 +138,7 @@ class BinaryNode:
 
     def explosion(self):
         # Explode the leftmost pair. First, get the leafs of the exploding pair with
-        # the respective position in the list_of_leafs. Then add the values to the value
+        # the respective position in the list leafs. Then add the values to the value
         # to the left or right of it, if they exit. The value of the parent BinaryNode is
         # then set to 0 and its left and right BinaryNode are set to None.
         (
@@ -147,17 +148,17 @@ class BinaryNode:
             right_leaf,
         ) = self.get_two_leftmost_exploading_leafs_incl_idx()
 
-        list_of_leafs = self.get_all_leafs()
+        leafs = self.get_all_leafs()
 
         if left_idx - 1 >= 0:
-            list_of_leafs[left_idx - 1].value += left_leaf.value
-        if right_idx <= len(list_of_leafs) - 2:
-            list_of_leafs[right_idx + 1].value += right_leaf.value
+            leafs[left_idx - 1].value += left_leaf.value
+        if right_idx <= len(leafs) - 2:
+            leafs[right_idx + 1].value += right_leaf.value
 
         left_leaf.reset_parent_after_explosion()
 
     def get_splitting_leaf(self):
-        # Get the leftmost value in the list_of_leafs that is to be splitted
+        # Get the leftmost value in the list leafs that is to be splitted
         splitting_leaf = None
 
         for leaf in self.get_all_leafs():
@@ -168,7 +169,7 @@ class BinaryNode:
         return splitting_leaf
 
     def split(self):
-        # Split the leftmost value in the list_of_leafs. A new BinaryNode is created
+        # Split the leftmost value in the list leafs. A new BinaryNode is created
         # for the left and right BinaryNode of the BinaryNode that is to be splitted
         # (splitting_leaf). The value of the left BinaryNode is rounded down and the
         # value of the right BinaryNode is rounded up. Lastly, the value of the

@@ -60,7 +60,7 @@ class BinaryNode:
         return root
 
     def flatten(self) -> List[int]:
-        # This is just to test and learn about classes in Python
+        # This is just to test and learn about classes in python
         values = []
 
         if self.is_leaf():

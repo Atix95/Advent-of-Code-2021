@@ -66,6 +66,12 @@ class Scanner:
         """
         return self.position
 
+    def get_rotation(self) -> int:
+        """
+        The rotation of the scanner compared to the reference scanner.
+        """
+        return self.rotation
+
     def get_beacon_spacings(
         self,
     ) -> list[list[float, list[int, int, int], list[int, int, int]]]:
@@ -141,18 +147,18 @@ def find_neighbours(scanners: list[Scanner]) -> list[list[int, int, int]]:
     parsed to the neighbours attribute of the scanner.
     """
     for scanner in scanners:
-        remaining_scanners = scanners[scanner.number + 1 :]
+        remaining_scanners = scanners[scanner.get_number() + 1 :]
 
         for remaining_scanner in remaining_scanners:
             beacons = []
             other_beacons = []
             overlapping_distances = 0
-            for distance, beacon_1, beacon_2 in scanner.beacon_spacings:
+            for distance, beacon_1, beacon_2 in scanner.get_beacon_spacings():
                 for (
                     other_distance,
                     other_beacon_1,
                     other_beacon_2,
-                ) in remaining_scanner.beacon_spacings:
+                ) in remaining_scanner.get_beacon_spacings():
                     if math.isclose(distance, other_distance):
                         overlapping_distances += 1
                         if beacon_1 not in beacons:
@@ -165,12 +171,16 @@ def find_neighbours(scanners: list[Scanner]) -> list[list[int, int, int]]:
                             other_beacons.append(other_beacon_2)
 
             if number_of_overlapping_beacons(overlapping_distances) >= 12:
-                scanner.neighbours[remaining_scanner.get_number()] = []
-                remaining_scanner.neighbours[scanner.get_number()] = []
+                scanner.get_neighbours()[remaining_scanner.get_number()] = []
+                remaining_scanner.get_neighbours()[scanner.get_number()] = []
 
                 for beacon, other_beacon in zip(beacons, other_beacons):
-                    scanner.neighbours[remaining_scanner.number].append(beacon)
-                    remaining_scanner.neighbours[scanner.number].append(other_beacon)
+                    scanner.get_neighbours()[remaining_scanner.get_number()].append(
+                        beacon
+                    )
+                    remaining_scanner.get_neighbours()[scanner.get_number()].append(
+                        other_beacon
+                    )
 
 
 def rotate_coordinates(
@@ -214,7 +224,9 @@ def rotate_scanner(
         return coordinates
 
     scanner_number = list_of_scanners_to_rotate_to.pop()
-    coordinates = rotate_coordinates(coordinates, scanners[scanner_number].rotation)
+    coordinates = rotate_coordinates(
+        coordinates, scanners[scanner_number].get_rotation()
+    )
     return rotate_scanner(scanners, coordinates, list_of_scanners_to_rotate_to)
 
 
@@ -235,7 +247,7 @@ def set_reference_scanner(
     return reference_scanner
 
 
-def find_all_beacons(scanners: list[Scanner]):
+def find_all_beacons(scanners: list[Scanner], reference_scanner_number: int = 0):
     """
     Find all beacons by rotating the neighbouring scanners to the reference scanner.
     The function starts with the reference scanner and rotates the neighbouring scanners
@@ -252,21 +264,21 @@ def find_all_beacons(scanners: list[Scanner]):
     """
     all_beacons_compared_to_reference_scanner = []
 
-    reference_scanner = set_reference_scanner(scanners, 0)
+    reference_scanner = set_reference_scanner(scanners, reference_scanner_number)
 
-    for beacon in reference_scanner.readings:
+    for beacon in reference_scanner.get_readings():
         all_beacons_compared_to_reference_scanner.append(beacon)
 
-    scanners_to_rotate = [reference_scanner.number]
+    scanners_to_rotate = [reference_scanner.get_number()]
     checked_scanners = set()
 
     while scanners_to_rotate:
         scanner_number = scanners_to_rotate.pop(0)
         scanner_position_found = False
 
-        for neighbour_number, overlapping_beacons in scanners[
-            scanner_number
-        ].neighbours.items():
+        for neighbour_number, overlapping_beacons in (
+            scanners[scanner_number].get_neighbours().items()
+        ):
             if (
                 scanner_number in checked_scanners
                 and neighbour_number in checked_scanners
@@ -274,16 +286,16 @@ def find_all_beacons(scanners: list[Scanner]):
                 continue
 
             scanners_to_rotate.append(neighbour_number)
-            scanners[neighbour_number].link_to_reference_scanner = scanners[
-                scanner_number
-            ].link_to_reference_scanner.copy()
+            scanners[neighbour_number].link_to_reference_scanner = (
+                scanners[scanner_number].get_link_to_reference_scanner().copy()
+            )
             scanners[neighbour_number].link_to_reference_scanner.append(
                 neighbour_number
             )
 
             counter = defaultdict(int)
             for overlapping_beacon in overlapping_beacons:
-                for neighbouring_beacon in scanners[neighbour_number].neighbours[
+                for neighbouring_beacon in scanners[neighbour_number].get_neighbours()[
                     scanner_number
                 ]:
                     for rotation in range(48):
@@ -306,39 +318,41 @@ def find_all_beacons(scanners: list[Scanner]):
                 if value >= 12:
                     scanner_position_found = True
 
-                    if scanners[neighbour_number].rotation is None:
+                    if scanners[neighbour_number].get_rotation() is None:
                         scanners[neighbour_number].rotation = rotation
 
-                    if scanners[neighbour_number].position is None:
+                    if scanners[neighbour_number].get_position() is None:
                         rotate_position_to_matching_scanner = rotate_scanner(
                             scanners,
                             [position_x, position_y, position_z],
-                            scanners[neighbour_number].link_to_reference_scanner.copy()[
-                                :-1
-                            ],
+                            scanners[neighbour_number]
+                            .get_link_to_reference_scanner()
+                            .copy()[:-1],
                         )
                         scanners[neighbour_number].position = [
-                            scanners[scanner_number].position[0]
+                            scanners[scanner_number].get_position()[0]
                             + rotate_position_to_matching_scanner[0],
-                            scanners[scanner_number].position[1]
+                            scanners[scanner_number].get_position()[1]
                             + rotate_position_to_matching_scanner[1],
-                            scanners[scanner_number].position[2]
+                            scanners[scanner_number].get_position()[2]
                             + rotate_position_to_matching_scanner[2],
                         ]
 
-                    for beacon in scanners[neighbour_number].readings:
+                    for beacon in scanners[neighbour_number].get_readings():
                         rotated_neighbouring_beacon = rotate_scanner(
                             scanners,
                             beacon,
-                            scanners[neighbour_number].link_to_reference_scanner.copy(),
+                            scanners[neighbour_number]
+                            .get_link_to_reference_scanner()
+                            .copy(),
                         )
                         translated_beacon = [
                             rotated_neighbouring_beacon[0]
-                            + scanners[neighbour_number].position[0],
+                            + scanners[neighbour_number].get_position()[0],
                             rotated_neighbouring_beacon[1]
-                            + scanners[neighbour_number].position[1],
+                            + scanners[neighbour_number].get_position()[1],
                             rotated_neighbouring_beacon[2]
-                            + scanners[neighbour_number].position[2],
+                            + scanners[neighbour_number].get_position()[2],
                         ]
                         if (
                             translated_beacon
@@ -360,6 +374,32 @@ def find_all_beacons(scanners: list[Scanner]):
     return all_beacons_compared_to_reference_scanner
 
 
+def largest_manhattan_distance_between_scanners(scanners: list[Scanner]) -> int:
+    manhatten_distances_between_scanners = []
+
+    for scanner in scanners:
+        remaining_scanners = scanners[scanner.get_number() + 1 :]
+
+        for remaining_scanner in remaining_scanners:
+            manhatten_distance = (
+                abs(
+                    scanners[scanner.get_number()].get_position()[0]
+                    - scanners[remaining_scanner.get_number()].get_position()[0]
+                )
+                + abs(
+                    scanners[scanner.get_number()].get_position()[1]
+                    - scanners[remaining_scanner.get_number()].get_position()[1]
+                )
+                + abs(
+                    scanners[scanner.get_number()].get_position()[2]
+                    - scanners[remaining_scanner.get_number()].get_position()[2]
+                )
+            )
+            manhatten_distances_between_scanners.append(manhatten_distance)
+
+    return max(manhatten_distances_between_scanners)
+
+
 def main() -> None:
     scanners = []
     input = load_input("day_19_input.txt")
@@ -370,7 +410,11 @@ def main() -> None:
     find_neighbours(scanners)
     all_beacons_compared_to_reference_scanner = find_all_beacons(scanners)
 
-    print(f"The number of beacons is {len(all_beacons_compared_to_reference_scanner)}.")
+    print(f"The number of beacons is: {len(all_beacons_compared_to_reference_scanner)}")
+    print(
+        f"The largest Manhatten distance between scanners is: "
+        + f"{largest_manhattan_distance_between_scanners(scanners)}"
+    )
 
 
 if __name__ == "__main__":

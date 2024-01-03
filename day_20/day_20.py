@@ -141,13 +141,13 @@ class TrenchMap:
         is 2 by default. The image is expanded by 5 pixels in each direction before
         the algorithm is applied. After enhancing the image is then cropped by 1 pixel
         in each direction to cut off the edges of the image that were not turned on
-        during an odd number of applications.
+        during an odd number of applications. For odd number of applications the image
+        is cropped by 6 pixels in each direction to cut off the edges of the image that
+        were turned on.
         """
         if number_of_applications == 0:
-            print(self.input_representation())
             return
 
-        print(self.input_representation())
         self.expand_images()
 
         number_of_lines = len(self.image)
@@ -176,8 +176,9 @@ class TrenchMap:
 
             enhanced_image.append(enhanced_line)
 
-        self.input_image = enhanced_image
         self.input_image = [line[1:-1] for line in enhanced_image[1:-1]]
+        if number_of_applications % 2 == 1:
+            self.input_image = [line[6:-6] for line in enhanced_image[6:-6]]
         self.convert_image_to_binary()
         self.apply_enhancement_algorithm(number_of_applications - 1)
 
@@ -187,14 +188,33 @@ class TrenchMap:
         direction before counting the number of pixels that are on as the edges of the
         image do not count towards the relevant pixels.
         """
-        return sum([line[5:-5].count("#") for line in self.input_image[5:-5]])
+        return sum([line.count("#") for line in self.input_image])
+
+    def crop_image_after_multiple_enhancements(self) -> None:
+        """
+        Cropping the image by 25 pixels in each direction to cut off the edges of the
+        image that were not turned on during an even number of applications.
+        """
+        self.input_image = [line[25:-25] for line in self.input_image[25:-25]]
+        self.convert_image_to_binary()
 
 
 def main():
     map = TrenchMap()
     map.load_input("day_20_input.txt")
-    map.apply_enhancement_algorithm()
-    print(f"The number of pixels that are on is: {map.number_of_pixels_on()}")
+    map.apply_enhancement_algorithm(number_of_applications=2)
+    print(map.input_representation())
+    print(
+        f"The number of pixels that are on after 2 applications is:",
+        map.number_of_pixels_on(),
+    )
+    map.apply_enhancement_algorithm(number_of_applications=48)
+    map.crop_image_after_multiple_enhancements()
+    print(map.input_representation())
+    print(
+        f"The number of pixels that are on after 50 applications is:",
+        map.number_of_pixels_on(),
+    )
 
 
 if __name__ == "__main__":

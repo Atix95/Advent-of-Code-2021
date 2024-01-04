@@ -29,6 +29,35 @@ def load_input(file_name: str) -> dict[int, list[list[int, int, int]]]:
 
 class Scanner:
     def __init__(self, scanner_number: int, readings: list[list[int, int, int]]):
+        """
+        scanner_number : int
+            The number of the scanner.
+
+        readings : list[list[int, int, int]]
+            The readings are given as a list of list with the x, y and z coordinates of
+            the beacon.
+
+        position : list[int, int, int]
+            The position of the scanner is determined compared to the reference scanner.
+
+        rotation : int
+            The rotation of the scanner is an integer of 48 possible rotations compared
+            to the reference scanner.
+
+        beacon_spacings : list[list[float, list[int, int, int], list[int, int, int]]]
+            The distance between two beacons is given by the euclidean distance between
+            the two beacons. The list contains the distance between the two beacons and
+            the coordinates of the two beacons.
+
+        neigbours : dict[int, list[list[int, int, int]]]
+            The neighbours of the scanner are given by a dictionary with the scanner
+            number as key and a list of the overlapping beacons, which are given as list
+            of the x, y and z value, as value.
+
+        link_to_the_reference_scanner : list[int]
+            The link to the reference scanner is given by a list of the scanner numbers
+            which are connected to the reference scanner.
+        """
         self.number = scanner_number
         self.readings = readings
         self.position = None
@@ -46,56 +75,6 @@ class Scanner:
         for reading in self.readings:
             output += f"{reading}\n"
         return output
-
-    def get_readings(self) -> list[list[int, int, int]]:
-        """
-        Readings are given as a list of list with the x, y and z coordinates of the
-        beacon.
-        """
-        return self.readings
-
-    def get_number(self) -> int:
-        """
-        The number of the scanner from the input file.
-        """
-        return self.number
-
-    def get_position(self) -> list[int, int, int]:
-        """
-        The position of the scanner compared to the reference scanner.
-        """
-        return self.position
-
-    def get_rotation(self) -> int:
-        """
-        The rotation of the scanner compared to the reference scanner.
-        """
-        return self.rotation
-
-    def get_beacon_spacings(
-        self,
-    ) -> list[list[float, list[int, int, int], list[int, int, int]]]:
-        """
-        The distance between two beacons is given by the euclidean distance between the
-        two beacons. The list contains the distance between the two beacons and the
-        coordinates of the two beacons.
-        """
-        return self.beacon_spacings
-
-    def get_neighbours(self) -> dict[int, list[list[int, int, int]]]:
-        """
-        The neighbours of the scanner are given by a dictionary with the scanner number
-        as key and a list of the overlapping beacons, which are given as list of the x,
-        y and z value, as value.
-        """
-        return self.neighbours
-
-    def get_link_to_reference_scanner(self) -> list[int]:
-        """
-        The link to the reference scanner is given by a list of the scanner numbers
-        which are connected to the reference scanner.
-        """
-        return self.link_to_reference_scanner
 
     def calculate_beacon_spacings(
         self,
@@ -147,18 +126,18 @@ def find_neighbours(scanners: list[Scanner]) -> list[list[int, int, int]]:
     parsed to the neighbours attribute of the scanner.
     """
     for scanner in scanners:
-        remaining_scanners = scanners[scanner.get_number() + 1 :]
+        remaining_scanners = scanners[scanner.number + 1 :]
 
         for remaining_scanner in remaining_scanners:
             beacons = []
             other_beacons = []
             overlapping_distances = 0
-            for distance, beacon_1, beacon_2 in scanner.get_beacon_spacings():
+            for distance, beacon_1, beacon_2 in scanner.beacon_spacings:
                 for (
                     other_distance,
                     other_beacon_1,
                     other_beacon_2,
-                ) in remaining_scanner.get_beacon_spacings():
+                ) in remaining_scanner.beacon_spacings:
                     if math.isclose(distance, other_distance):
                         overlapping_distances += 1
                         if beacon_1 not in beacons:
@@ -171,16 +150,12 @@ def find_neighbours(scanners: list[Scanner]) -> list[list[int, int, int]]:
                             other_beacons.append(other_beacon_2)
 
             if number_of_overlapping_beacons(overlapping_distances) >= 12:
-                scanner.get_neighbours()[remaining_scanner.get_number()] = []
-                remaining_scanner.get_neighbours()[scanner.get_number()] = []
+                scanner.neighbours[remaining_scanner.number] = []
+                remaining_scanner.neighbours[scanner.number] = []
 
                 for beacon, other_beacon in zip(beacons, other_beacons):
-                    scanner.get_neighbours()[remaining_scanner.get_number()].append(
-                        beacon
-                    )
-                    remaining_scanner.get_neighbours()[scanner.get_number()].append(
-                        other_beacon
-                    )
+                    scanner.neighbours[remaining_scanner.number].append(beacon)
+                    remaining_scanner.neighbours[scanner.number].append(other_beacon)
 
 
 def rotate_coordinates(
@@ -224,9 +199,7 @@ def rotate_scanner(
         return coordinates
 
     scanner_number = list_of_scanners_to_rotate_to.pop()
-    coordinates = rotate_coordinates(
-        coordinates, scanners[scanner_number].get_rotation()
-    )
+    coordinates = rotate_coordinates(coordinates, scanners[scanner_number].rotation)
     return rotate_scanner(scanners, coordinates, list_of_scanners_to_rotate_to)
 
 
@@ -266,19 +239,19 @@ def find_all_beacons(scanners: list[Scanner], reference_scanner_number: int = 0)
 
     reference_scanner = set_reference_scanner(scanners, reference_scanner_number)
 
-    for beacon in reference_scanner.get_readings():
+    for beacon in reference_scanner.readings:
         all_beacons_compared_to_reference_scanner.append(beacon)
 
-    scanners_to_rotate = [reference_scanner.get_number()]
+    scanners_to_rotate = [reference_scanner.number]
     checked_scanners = set()
 
     while scanners_to_rotate:
         scanner_number = scanners_to_rotate.pop(0)
         scanner_position_found = False
 
-        for neighbour_number, overlapping_beacons in (
-            scanners[scanner_number].get_neighbours().items()
-        ):
+        for neighbour_number, overlapping_beacons in scanners[
+            scanner_number
+        ].neighbours.items():
             if (
                 scanner_number in checked_scanners
                 and neighbour_number in checked_scanners
@@ -286,16 +259,16 @@ def find_all_beacons(scanners: list[Scanner], reference_scanner_number: int = 0)
                 continue
 
             scanners_to_rotate.append(neighbour_number)
-            scanners[neighbour_number].link_to_reference_scanner = (
-                scanners[scanner_number].get_link_to_reference_scanner().copy()
-            )
+            scanners[neighbour_number].link_to_reference_scanner = scanners[
+                scanner_number
+            ].link_to_reference_scanner.copy()
             scanners[neighbour_number].link_to_reference_scanner.append(
                 neighbour_number
             )
 
             counter = defaultdict(int)
             for overlapping_beacon in overlapping_beacons:
-                for neighbouring_beacon in scanners[neighbour_number].get_neighbours()[
+                for neighbouring_beacon in scanners[neighbour_number].neighbours[
                     scanner_number
                 ]:
                     for rotation in range(48):
@@ -318,41 +291,39 @@ def find_all_beacons(scanners: list[Scanner], reference_scanner_number: int = 0)
                 if value >= 12:
                     scanner_position_found = True
 
-                    if scanners[neighbour_number].get_rotation() is None:
+                    if scanners[neighbour_number].rotation is None:
                         scanners[neighbour_number].rotation = rotation
 
-                    if scanners[neighbour_number].get_position() is None:
+                    if scanners[neighbour_number].position is None:
                         rotate_position_to_matching_scanner = rotate_scanner(
                             scanners,
                             [position_x, position_y, position_z],
-                            scanners[neighbour_number]
-                            .get_link_to_reference_scanner()
-                            .copy()[:-1],
+                            scanners[neighbour_number].link_to_reference_scanner.copy()[
+                                :-1
+                            ],
                         )
                         scanners[neighbour_number].position = [
-                            scanners[scanner_number].get_position()[0]
+                            scanners[scanner_number].position[0]
                             + rotate_position_to_matching_scanner[0],
-                            scanners[scanner_number].get_position()[1]
+                            scanners[scanner_number].position[1]
                             + rotate_position_to_matching_scanner[1],
-                            scanners[scanner_number].get_position()[2]
+                            scanners[scanner_number].position[2]
                             + rotate_position_to_matching_scanner[2],
                         ]
 
-                    for beacon in scanners[neighbour_number].get_readings():
+                    for beacon in scanners[neighbour_number].readings:
                         rotated_neighbouring_beacon = rotate_scanner(
                             scanners,
                             beacon,
-                            scanners[neighbour_number]
-                            .get_link_to_reference_scanner()
-                            .copy(),
+                            scanners[neighbour_number].link_to_reference_scanner.copy(),
                         )
                         translated_beacon = [
                             rotated_neighbouring_beacon[0]
-                            + scanners[neighbour_number].get_position()[0],
+                            + scanners[neighbour_number].position[0],
                             rotated_neighbouring_beacon[1]
-                            + scanners[neighbour_number].get_position()[1],
+                            + scanners[neighbour_number].position[1],
                             rotated_neighbouring_beacon[2]
-                            + scanners[neighbour_number].get_position()[2],
+                            + scanners[neighbour_number].position[2],
                         ]
                         if (
                             translated_beacon
@@ -378,21 +349,21 @@ def largest_manhattan_distance_between_scanners(scanners: list[Scanner]) -> int:
     manhatten_distances_between_scanners = []
 
     for scanner in scanners:
-        remaining_scanners = scanners[scanner.get_number() + 1 :]
+        remaining_scanners = scanners[scanner.number + 1 :]
 
         for remaining_scanner in remaining_scanners:
             manhatten_distance = (
                 abs(
-                    scanners[scanner.get_number()].get_position()[0]
-                    - scanners[remaining_scanner.get_number()].get_position()[0]
+                    scanners[scanner.number].position[0]
+                    - scanners[remaining_scanner.number].position[0]
                 )
                 + abs(
-                    scanners[scanner.get_number()].get_position()[1]
-                    - scanners[remaining_scanner.get_number()].get_position()[1]
+                    scanners[scanner.number].position[1]
+                    - scanners[remaining_scanner.number].position[1]
                 )
                 + abs(
-                    scanners[scanner.get_number()].get_position()[2]
-                    - scanners[remaining_scanner.get_number()].get_position()[2]
+                    scanners[scanner.number].position[2]
+                    - scanners[remaining_scanner.number].position[2]
                 )
             )
             manhatten_distances_between_scanners.append(manhatten_distance)

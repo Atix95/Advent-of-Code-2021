@@ -9,6 +9,19 @@ class TrenchMap:
     Class that represents a trench map. It can load the input, convert it to binary
     and apply the enhancement algorithm. It can also count the number of pixels that
     are on.
+
+    Attributes:
+        input_image : list[str]
+            Input image as it is represented in the input.
+
+        image : list[str]
+            Image represented as binary.
+
+        input_enhancement_algorithm : str
+            Enhancement algorithm as it is represented in the input.
+
+        enhancement_algorithm : int
+            Enhancement algorithm as binary.
     """
 
     def __init__(self):
@@ -23,22 +36,6 @@ class TrenchMap:
         input.
         """
         return self.input_representation()
-
-    def get_input_image(self) -> list[str]:
-        """Input image as it is represented in the input."""
-        return self.input_image
-
-    def get_image(self) -> list[str]:
-        """Image represented as binary."""
-        return self.image
-
-    def get_input_enhancement_algorithm(self) -> str:
-        """Enhancement algorithm as it is represented in the input."""
-        return self.input_enhancement_algorithm
-
-    def get_enhancement_algorithm(self) -> int:
-        """ "Enhancement algorithm as binary."""
-        return self.enhancement_algorithm
 
     def input_representation(self) -> str:
         """

@@ -14,18 +14,41 @@ class Player:
             + f"{self.score}."
         )
 
-    def get_number(self) -> int:
-        return self.number
-
-    def get_position(self) -> int:
-        return self.position
-
-    def get_score(self) -> int:
-        return self.score
-
 
 class DiracDice:
     def __init__(self) -> None:
+        """
+        Class that represents the Dirac dice game. It can play a practice game and a
+        real game. The practice game is played with deterministic dice, i.e., the dice
+        always rolls a the next number in the sequence from 1 to 100. The real game is
+        played with a quantum die, i.e., the dice rolls a number from 1 to 3 and creates
+        a superposition of the three possible outcomes. The game is deterministic, i.e.,
+        the same game state can be reached multiple times, as the game state is defined
+        by the 10 player positions and the 21 player scores yielding 10*10*21*21=44100
+        different game states.
+
+        Attributes:
+            board : list[int]
+                The circular board of the game with positions from 1 to 10.
+
+            deterministic_dice : list[int]
+                The deterministic dice with numbers from 1 to 100.
+
+            dice_position : int
+                The current position of the deterministic dice.
+
+            players : list[Player]
+                The players of the game that are initialized with their number and
+                position using the Player class.
+
+            quantum_die : list[int]
+                The quantum die with numbers from 1 to 3.
+
+            cache : dict[tuple[int, int, int, int], tuple[int, int]]
+                Dictionary that caches the scores of the players for a given game state.
+                The game state is defined by the scores of the two players and their
+                positions.
+        """
         self.board = [count + 1 for count in range(10)]
         self.deterministic_dice = [count + 1 for count in range(100)]
         self.dice_position = 1
@@ -38,24 +61,6 @@ class DiracDice:
         for player in self.players:
             output += f"{player}\n"
         return output
-
-    def get_board(self) -> list[int]:
-        return self.board
-
-    def get_deterministic_dice(self) -> list[int]:
-        return self.deterministic_dice
-
-    def get_position(self) -> int:
-        return self.dice_position
-
-    def get_players(self) -> list[Player]:
-        return self.players
-
-    def get_quantum_die(self) -> list[int]:
-        return self.quantum_die
-
-    def get_cache(self) -> dict[tuple[int, int, int, int], tuple[int, int]]:
-        return self.cache
 
     def initialize_players(self, file_name: str) -> None:
         """Initialize the players with their number and position."""
@@ -120,9 +125,7 @@ class DiracDice:
         self.announce_winner_of_practice_game(num_of_dice_rolls)
 
     def announce_winner_of_practice_game(self, num_of_dice_rolls) -> int:
-        scores = sorted(
-            [(player.get_score(), player.get_number()) for player in self.players]
-        )
+        scores = sorted([(player.score, player.number) for player in self.players])
         print(
             "Practice game:\n"
             + f"The dice has been rolled {num_of_dice_rolls} times.\n{self}"
@@ -169,7 +172,7 @@ class DiracDice:
             waiting_player_score,
             current_player_position,
             waiting_player_position,
-        ) in self.get_cache():
+        ) in self.cache:
             return self.cache[
                 (
                     current_player_score,
@@ -180,9 +183,7 @@ class DiracDice:
             ]
 
         score = (0, 0)
-        for roll_1, roll_2, roll_3 in itertools.product(
-            self.get_quantum_die(), repeat=3
-        ):
+        for roll_1, roll_2, roll_3 in itertools.product(self.quantum_die, repeat=3):
             moves = roll_1 + roll_2 + roll_3
             new_position = (current_player_position + moves) % board_length
             if new_position == 0:
@@ -215,10 +216,10 @@ class DiracDice:
         player_1, player_2 = self.players
 
         score = self.take_turns(
-            player_1.get_score(),
-            player_2.get_score(),
-            player_1.get_position(),
-            player_2.get_position(),
+            player_1.score,
+            player_2.score,
+            player_1.position,
+            player_2.position,
             board_length,
         )
         self.announce_winner_of_the_game(score)
